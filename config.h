@@ -9,11 +9,11 @@
 #define SPACE_Y 600
 #endif
 
-#define MARF_MAX       1024
+#define MARF_MAX         24
 
 #define SPEED_MAX        64
 
-#define MAC_LEN           3 /* in bytes */
+#define MAC_LEN           2 /* in bytes */
 
 #define RATE_STANDUP      5 /* per mille */
 #define RATE_SITDOWN      RATE_STANDUP
@@ -21,8 +21,8 @@
 #define RATE_TURNOFF     16 /* per mille */
 #define RATE_TURNON       RATE_TURNOFF
 
-#define MARF_R_RADIO     10
-#define MARF_R_RADIO_JAM 30
+#define RADIO_R          10
+#define RADIO_R_JAM      30
 
 #define GFX_X           800
 #define GFX_Y           600

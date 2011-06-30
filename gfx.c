@@ -100,6 +100,54 @@ void clearScreen(SDL_Surface * s)
 }
 
 
+void Draw_Line(SDL_Surface * s,
+		uint16_t x0, uint16_t y0,
+		uint16_t x1, uint16_t y1,
+		uint32_t color)
+{
+	uint16_t x;
+	uint16_t y;
+	double m = ((double)y1 - (double)y0) / ((double)x1 - (double)x0);
+	double delta = y0;
+	if (m<1 && m>-1)
+	{
+		if (x1 < x0)
+		{ /* swap */
+			x  = x0;
+			x0 = x1;
+			x1 = x;
+			x  = y0;
+			y0 = y1;
+			y1 = x;
+		}
+		delta = y0;
+		for (x=x0; x <= x1; x++)
+		{
+			y = delta;
+			setPixel(s, x, y, color);
+			delta += m;
+		}
+	}else{
+		if (y1 < y0)
+		{ /* swap */
+			x  = x0;
+			x0 = x1;
+			x1 = x;
+			x  = y0;
+			y0 = y1;
+			y1 = x;
+		}
+		delta = x0;
+		for (y=y0; y <= y1; y++)
+		{
+			x = delta;
+			setPixel(s, x, y, color);
+			delta += 1/m;
+		}
+	}
+}
+
+
 void mainloop_gfx(marfbed_t * b)
 {
 	SDL_PollEvent( &e );
@@ -118,10 +166,20 @@ void mainloop_gfx(marfbed_t * b)
 	int i;
 	for(i=0; i<MARF_MAX; i++)
 	{
+		Draw_Line(s,
+				b->marf[i].x,
+				b->marf[i].y,
+				b->marf[i].dest_x,
+				b->marf[i].dest_y,
+				0x00666666
+			 );
+	}
+	for(i=0; i<MARF_MAX; i++)
+	{
 		Draw_Circle(s,
 				b->marf[i].x * GFX_X / SPACE_X,
 				b->marf[i].y * GFX_Y / SPACE_Y,
-				MARF_R_RADIO_JAM,
+				RADIO_R_JAM,
 				COLOR_RADIO_JAM
 			   );
 	}
@@ -130,7 +188,7 @@ void mainloop_gfx(marfbed_t * b)
 		Draw_Circle(s,
 				b->marf[i].x * GFX_X / SPACE_X,
 				b->marf[i].y * GFX_Y / SPACE_Y,
-				MARF_R_RADIO,
+				RADIO_R,
 				COLOR_RADIO
 			   );
 	}
@@ -143,7 +201,6 @@ void mainloop_gfx(marfbed_t * b)
 				b->marf[i].color
 			   );
 	}
-
 
 	SDL_Flip(s);
 }

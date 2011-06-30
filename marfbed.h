@@ -7,6 +7,8 @@
 
 typedef struct marf_s
 {
+	uint32_t index;
+
 	uint16_t x; /* current position */
 	uint16_t y;
 

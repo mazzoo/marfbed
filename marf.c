@@ -72,7 +72,10 @@ void turnon(marf_t * m)
 	if (m->enabled) return;
 	if ( (random()%1000) > RATE_TURNON) return;
 
+	//printf("marf %2.2d turnon\n", m->index);
+
 	m->enabled = 1;
+
 	set_rnd_start(m);
 	set_rnd_dest(m);
 	set_rnd_speed(m);
@@ -84,10 +87,14 @@ void turnon(marf_t * m)
 
 void turnoff(marf_t * m)
 {
-	if (!m->enabled) return;
+	if (m->enabled) return;
+	if (m->moving) return;
 	if ( (random()%1000) > RATE_TURNOFF) return;
 
+	//printf("marf %2.2d turnoff\n", m->index);
+
 	m->enabled = 0;
+	m->moving  = 0;
 }
 
 
@@ -97,6 +104,8 @@ void standup(marf_t * m)
 	if (m->moving) return;
 	if ( (random()%1000) > RATE_STANDUP) return;
 
+	//printf("marf %2.2d standup\n", m->index);
+
 	m->start_x = m->x;
 	m->start_y = m->y;
 	set_rnd_dest(m);
@@ -104,19 +113,21 @@ void standup(marf_t * m)
 
 	m->color = COLOR_MOVING;
 	m->moving = 1;
-	printf("moving: %d\n", ++moving);
+	//printf("moving: %d\n", ++moving);
 }
 
 
-void sitdown(marf_t * m)
+void sitdown(marf_t * m) /* NOT USED */
 {
 	if (!m->enabled) return;
 	if (m->moving) return;
 	if ( (random()%1000) > RATE_SITDOWN) return;
 
+	//printf("marf %2.2d sitdown\n", m->index);
+
 	m->color = COLOR_SITTING;
 	m->moving = 0;
-	printf("moving: %d\n", --moving);
+	//printf("moving: %d\n", --moving);
 }
 
 
@@ -203,7 +214,7 @@ void move(marf_t * m)
 	{
 		m->moving = 0;
 		m->color  = COLOR_SITTING;
-		printf("moving: %d\n", --moving);
+		//printf("moving: %d\n", --moving);
 	}
 }
 
