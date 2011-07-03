@@ -9,32 +9,59 @@
 #define SPACE_Y 600
 #endif
 
-#define MARF_MAX         24
+#define MARF_MAX              80
 
-#define SPEED_MAX        64
+/* protocol */
 
-#define MAC_LEN           2 /* in bytes */
+#define MAC_LEN                1 /* in bytes */
 
-#define RATE_STANDUP      5 /* per mille */
-#define RATE_SITDOWN      RATE_STANDUP
+#define MAX_PACKET_LEN        32
 
-#define RATE_TURNOFF     16 /* per mille */
-#define RATE_TURNON       RATE_TURNOFF
+#define PROTO_HELLO_RATE     100
+#define PROTO_HELLO_JITTER     8 /* otherwise direct neighbours may see never */
 
-#define RADIO_R          10
-#define RADIO_R_JAM      30
+#define PACKET_TYPE_HELLO   0x01
 
-#define GFX_X           800
-#define GFX_Y           600
+#define PROTO_STATE_RX    0x0001
+#define PROTO_STATE_RU    0x0002 /* transmitter ramp up for TX */
+#define PROTO_STATE_TX    0x0003
+#define PROTO_STATE_RD    0x0004 /* transmitter turnoff for RX */
 
-#define GFX_MARF_X 2
-#define GFX_MARF_Y GFX_MARF_X
+/* node movement */
 
-#define COLOR_RADIO       0x0000ff69
-#define COLOR_RADIO_JAM   0x00ffad00
-#define COLOR_MOVING      0x00888888
-#define COLOR_SITTING     0x00232323
-#define COLOR_DUPLICATE   0x00ff4444 /* FIXME only used @startup */
+#define SPEED_MAX             64
 
+#define RATE_STANDUP           5 /* per mille */
+#define RATE_SITDOWN    RATE_STANDUP
+
+#define RATE_TURNOFF          16 /* per mille */
+#define RATE_TURNON     RATE_TURNOFF
+
+
+#define RADIO_R               10
+#define RADIO_R_JAM           30
+
+#define RADIO_R_SQ      (RADIO_R     * RADIO_R    )
+#define RADIO_R_JAM_SQ  (RADIO_R_JAM * RADIO_R_JAM)
+
+
+#define GFX_X                800
+#define GFX_Y                600
+
+#define GFX_MARF_X             3
+#define GFX_MARF_Y      GFX_MARF_X
+
+/* ring 1 */
+#define COLOR_MOVING    0x00888888
+#define COLOR_SITTING   0x00232323
+#define COLOR_DUPLICATE 0x00ff4444 /* FIXME only used @startup */
+
+/* ring 2 */
+#define COLOR_RADIO     0x0000ff69
+
+/* ring 3 */
+#define COLOR_RADIO_JAM     0x00ffad00
+#define COLOR_RADIO_JAM_NOW 0x00ffadff
 
 #endif /* CONFIG_H */
+

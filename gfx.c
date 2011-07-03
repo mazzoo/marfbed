@@ -1,16 +1,31 @@
-
+#include <unistd.h>
 #include <SDL/SDL.h>
-#include <SDL/SDL_image.h>
+#include <SDL/SDL_ttf.h>
 
 #include "config.h"
 #include "marfbed.h"
 
-SDL_Event e;
 SDL_Surface * s    = NULL;
+
+#define FONT_NAME "/usr/share/fonts/truetype/freefont/FreeSans.ttf"
 
 void init_gfx(marfbed_t * b)
 {
+	/* graphics */
 	SDL_Init(SDL_INIT_VIDEO);
+
+	/* fonts */
+	TTF_Init();
+	b->font = TTF_OpenFont(FONT_NAME, 12);
+	if (!b->font)
+	{
+		printf("ERROR: couldn't open %s: %s\n",
+			FONT_NAME,
+			TTF_GetError()
+			);
+		exit(1);
+	}
+
 	atexit(SDL_Quit);
 	s = SDL_SetVideoMode(
 			GFX_X,
@@ -25,7 +40,14 @@ void init_gfx(marfbed_t * b)
 		exit(1);
 	}
 	SDL_WM_SetCaption("·-= marf testbed =-·", "marfbed");
-	//	SDL_BlitSurface(p, 0, s, 0);
+
+	b->show_ring_1  = 1;
+	b->show_ring_2  = 1;
+	b->show_ring_3  = 1;
+	b->show_lines   = 1;
+	b->show_numbers = 0;
+	b->show_info    = 0;
+
 	SDL_Flip(s);
 }
 
@@ -150,56 +172,151 @@ void Draw_Line(SDL_Surface * s,
 
 void mainloop_gfx(marfbed_t * b)
 {
-	SDL_PollEvent( &e );
-	if (
-			( (e.type == SDL_KEYDOWN) &&
-			  ( (e.key.keysym.sym == SDLK_ESCAPE) ||
-			    (e.key.keysym.sym == SDLK_q)
-			  )
-			) ||
-			(e.type == SDL_QUIT)
-	   )
-		exit(0);
+	SDL_Event e;
+	int pause = 0;
+
+	do
+	{
+		if (pause)
+			usleep(10000);
+		e.type = SDL_NOEVENT;
+		SDL_PollEvent( &e );
+		if (
+				( (e.type == SDL_KEYDOWN) &&
+				  ( (e.key.keysym.sym == SDLK_ESCAPE) ||
+				    (e.key.keysym.sym == SDLK_q)
+				  )
+				) ||
+				(e.type == SDL_QUIT)
+		   )
+			exit(0);
+		/* key presses */
+		if ( e.type == SDL_KEYDOWN )
+		{
+			/* p or space = pause */
+			if ( e.key.keysym.sym == SDLK_SPACE ||
+			     e.key.keysym.sym == SDLK_p )
+				pause = pause ? 0 : 1;
+
+			/* n = numbers */
+			if ( e.key.keysym.sym == SDLK_n )
+				b->show_numbers = b->show_numbers ? 0 : 1;
+
+			/* i = info */
+			if ( e.key.keysym.sym == SDLK_i )
+				b->show_info = b->show_info ? 0 : 1;
+
+			/* 1, 2, 3 = show ring 1, 2, 3 */
+			if ( e.key.keysym.sym == SDLK_1 )
+				b->show_ring_1 = b->show_ring_1 ? 0 : 1;
+			if ( e.key.keysym.sym == SDLK_2 )
+				b->show_ring_2 = b->show_ring_2 ? 0 : 1;
+			if ( e.key.keysym.sym == SDLK_3 )
+				b->show_ring_3 = b->show_ring_3 ? 0 : 1;
+
+			/* l = lines */
+			if ( e.key.keysym.sym == SDLK_l )
+				b->show_lines = b->show_lines ? 0 : 1;
+		}
+	} while (pause);
 
 	clearScreen(s);
 
 	int i;
-	for(i=0; i<MARF_MAX; i++)
+	if (b->show_lines)
 	{
-		Draw_Line(s,
-				b->marf[i].x,
-				b->marf[i].y,
-				b->marf[i].dest_x,
-				b->marf[i].dest_y,
-				0x00666666
-			 );
+		for(i=0; i<MARF_MAX; i++)
+		{
+			if (!b->marf[i].enabled) continue;
+			Draw_Line(s,
+					b->marf[i].x,
+					b->marf[i].y,
+					b->marf[i].dest_x,
+					b->marf[i].dest_y,
+					0x00222222
+				 );
+		}
 	}
-	for(i=0; i<MARF_MAX; i++)
+	if (b->show_ring_3)
 	{
-		Draw_Circle(s,
-				b->marf[i].x * GFX_X / SPACE_X,
-				b->marf[i].y * GFX_Y / SPACE_Y,
-				RADIO_R_JAM,
-				COLOR_RADIO_JAM
-			   );
+		for(i=0; i<MARF_MAX; i++)
+		{
+			if (!b->marf[i].enabled) continue;
+			Draw_Circle(s,
+					b->marf[i].x * GFX_X / SPACE_X,
+					b->marf[i].y * GFX_Y / SPACE_Y,
+					RADIO_R_JAM,
+					COLOR_RADIO_JAM
+				   );
+		}
 	}
-	for(i=0; i<MARF_MAX; i++)
+	if (b->show_ring_2)
 	{
-		Draw_Circle(s,
-				b->marf[i].x * GFX_X / SPACE_X,
-				b->marf[i].y * GFX_Y / SPACE_Y,
-				RADIO_R,
-				COLOR_RADIO
-			   );
+		for(i=0; i<MARF_MAX; i++)
+		{
+			if (!b->marf[i].enabled) continue;
+			Draw_Circle(s,
+					b->marf[i].x * GFX_X / SPACE_X,
+					b->marf[i].y * GFX_Y / SPACE_Y,
+					RADIO_R,
+					COLOR_RADIO
+				   );
+		}
 	}
-	for(i=0; i<MARF_MAX; i++)
+	if (b->show_ring_1)
 	{
-		Draw_Circle(s,
-				b->marf[i].x * GFX_X / SPACE_X,
-				b->marf[i].y * GFX_Y / SPACE_Y,
-				GFX_MARF_X,
-				b->marf[i].color
-			   );
+		for(i=0; i<MARF_MAX; i++)
+		{
+			uint32_t col;
+			if (!b->marf[i].enabled) continue;
+			if (b->marf[i].moving)
+				col = COLOR_MOVING;
+			else
+				col = b->marf[i].color;
+			Draw_Circle(s,
+					b->marf[i].x * GFX_X / SPACE_X,
+					b->marf[i].y * GFX_Y / SPACE_Y,
+					GFX_MARF_X,
+					col
+				   );
+		}
+	}
+
+
+	if (b->show_numbers)
+	{
+		SDL_Color fg_color = {0xee, 0xee, 0xee, 0x00};
+		SDL_Color bg_color = {0x33, 0x33, 0x33, 0x00};
+
+		for(i=0; i<MARF_MAX; i++)
+		{
+			char buf[16];
+			if (!b->marf[i].enabled) continue;
+			SDL_Surface * surf_text;
+			snprintf(buf, 16, "n%d", i);
+#if 0
+			surf_text = TTF_RenderText_Solid(
+					b->font,
+					buf,
+					fg_color );
+#else
+			surf_text = TTF_RenderText_Shaded(
+					b->font,
+					buf,
+					fg_color, bg_color );
+#endif
+			if (!surf_text)
+			{
+				printf("ERROR: font rendering: %s\n", TTF_GetError());
+				exit(1);
+			}
+			SDL_Rect rect_welcome = { b->marf[i].x + 1, b->marf[i].y - 16, 40, 40 };
+			if (SDL_BlitSurface(surf_text, NULL, s, &rect_welcome))
+			{
+				printf("ERROR: couldn't bit surface: %s\n", SDL_GetError());
+				exit(1);
+			}
+		}
 	}
 
 	SDL_Flip(s);

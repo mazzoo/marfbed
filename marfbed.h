@@ -2,8 +2,24 @@
 #define MARFBED_H
 
 #include <stdint.h>
+#include <SDL/SDL_ttf.h>
 
 #include "config.h"
+
+
+#define STATE_RX_EN 0x00000001
+#define STATE_TX_EN 0x00000002
+
+typedef struct protocol_s
+{
+	uint32_t state;
+	uint32_t hello_count;
+
+	uint8_t  sMAC[MAC_LEN];
+	uint8_t  dMAC[MAC_LEN];
+
+	uint8_t  packet[MAX_PACKET_LEN];
+} protocol_t;
 
 typedef struct marf_s
 {
@@ -26,11 +42,22 @@ typedef struct marf_s
 
 	uint8_t  moving;
 	uint8_t  enabled;
+
+	protocol_t proto;
 } marf_t;
 
 typedef struct marfbed_s
 {
 	marf_t * marf;
+
+	TTF_Font *font;
+
+	int    show_ring_1;
+	int    show_ring_2;
+	int    show_ring_3;
+	int    show_lines;
+	int    show_info;
+	int    show_numbers;
 } marfbed_t;
 
 #endif /* MARFBED_H */

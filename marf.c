@@ -1,11 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
+#include <string.h>
 #include <math.h>
 
 #include "marfbed.h"
 
 
-static int moving = MARF_MAX;
+//static int moving = MARF_MAX;
 
 void set_rnd_start(marf_t * m)
 {
@@ -47,10 +49,11 @@ void init_marf(marf_t * m)
 	m->x = m->start_x;
 	m->y = m->start_y;
 
-	m->color = COLOR_MOVING;
 	m->moving = 1;
 
 	m->enabled = 1;
+
+	m->proto.hello_count = random() % PROTO_HELLO_RATE;
 }
 
 
@@ -82,6 +85,8 @@ void turnon(marf_t * m)
 
 	m->x = m->start_x;
 	m->y = m->start_y;
+
+	m->proto.hello_count = PROTO_HELLO_RATE;
 }
 
 
@@ -104,16 +109,12 @@ void standup(marf_t * m)
 	if (m->moving) return;
 	if ( (random()%1000) > RATE_STANDUP) return;
 
-	//printf("marf %2.2d standup\n", m->index);
-
 	m->start_x = m->x;
 	m->start_y = m->y;
 	set_rnd_dest(m);
 	set_rnd_speed(m);
 
-	m->color = COLOR_MOVING;
 	m->moving = 1;
-	//printf("moving: %d\n", ++moving);
 }
 
 
@@ -123,11 +124,8 @@ void sitdown(marf_t * m) /* NOT USED */
 	if (m->moving) return;
 	if ( (random()%1000) > RATE_SITDOWN) return;
 
-	//printf("marf %2.2d sitdown\n", m->index);
-
 	m->color = COLOR_SITTING;
 	m->moving = 0;
-	//printf("moving: %d\n", --moving);
 }
 
 
@@ -218,9 +216,74 @@ void move(marf_t * m)
 	}
 }
 
+
+void protocol(marf_t * m)
+{
+	protocol_t * p = &m->proto;
+
+	if (!m->enabled) return;
+
+	p->hello_count--;
+	if (!p->hello_count)
+	{
+		/* reset periodic hello counter */
+		p->hello_count = PROTO_HELLO_RATE +
+			random() % PROTO_HELLO_JITTER;
+		m->color = 0x0000ff00;
+
+		/* prepare packet for TX */
+		memcpy(p->sMAC, m->mac, MAC_LEN);
+		memset(p->dMAC, 0xff, MAC_LEN); /* broadcast */
+		p->packet[0] = 2;
+		p->packet[1] = PACKET_TYPE_HELLO;
+		p->state = PROTO_STATE_TX;
+	}else{
+		m->color = COLOR_SITTING;
+		if (m->moving)
+			m->color = COLOR_MOVING;
+		p->state = PROTO_STATE_RX;
+	}
+}
+
+
+void transmit(marf_t * m)
+{
+
+}
+
+
+void interfere(marf_t * a, marf_t * b)
+{
+
+	protocol_t * pa = &a->proto;
+	protocol_t * pb = &b->proto;
+
+	if (
+		(pa->state == PROTO_STATE_TX) &&
+		(pb->state == PROTO_STATE_TX) 
+	   )
+	{
+		/* distance calculation */
+		if (
+			(a->x - b->x) * (a->x - b->x) +
+			(a->y - b->y) * (a->y - b->y) <
+			RADIO_R_JAM_SQ
+		   )
+		{
+			printf("%d and %d interfere\n", a->index, b->index);
+		}
+	}
+}
+
+
+void receive(marf_t * m)
+{
+}
+
+
 void mainloop_marf(marfbed_t * b)
 {
-	int i;
+	int i, j;
 	for (i=0; i<MARF_MAX; i++)
 	{
 		turnon(&b->marf[i]);
@@ -228,5 +291,14 @@ void mainloop_marf(marfbed_t * b)
 		standup(&b->marf[i]);
 		//sitdown(&b->marf[i]); // there is no sitdown
 		move(&b->marf[i]);
+		protocol(&b->marf[i]);
 	}
+	for (i=0; i<MARF_MAX; i++)
+		transmit(&b->marf[i]);
+	for (i=0; i<MARF_MAX; i++)
+		for (j=i+1; j<MARF_MAX; j++)
+			interfere(&b->marf[i], &b->marf[j]);
+	for (i=0; i<MARF_MAX; i++)
+		receive(&b->marf[i]);
 }
+

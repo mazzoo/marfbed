@@ -1,5 +1,5 @@
 CFLAGS=-Wall -O2 -ggdb
-LDFLAGS=`sdl-config --libs`
+LDFLAGS=`sdl-config --libs` -lSDL_ttf
 
 OBJECTS=marfbed.o init.o gfx.o marf.o
 
