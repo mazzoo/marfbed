@@ -66,12 +66,13 @@ void setPixel(	/* FIXME: this must be simpler */
 	SDL_FillRect(s, &pixel, color);
 }
 
-void Draw_Circle(
+void Draw_Circle_Segments(
 		SDL_Surface * s,
 		uint16_t x0,
 		uint16_t y0,
 		uint16_t r,
-		uint32_t color
+		uint32_t color,
+		uint8_t  segments
 		)
 {
 	int f = 1 - r;
@@ -80,10 +81,14 @@ void Draw_Circle(
 	int x = 0;
 	int y = r;
 
-	setPixel(s, x0, y0 + r, color);
-	setPixel(s, x0, y0 - r, color);
-	setPixel(s, x0 + r, y0, color);
-	setPixel(s, x0 - r, y0, color);
+	if ((segments & 0x81) == 0x81)
+		setPixel(s, x0, y0 - r, color); /* top */
+	if ((segments & 0x18) == 0x18)
+		setPixel(s, x0, y0 + r, color); /* bot */
+	if ((segments & 0x06) == 0x06)
+		setPixel(s, x0 + r, y0, color); /* right */
+	if ((segments & 0x60) == 0x60)
+		setPixel(s, x0 - r, y0, color); /* left */
 
 	while(x < y)
 	{
@@ -99,17 +104,35 @@ void Draw_Circle(
 		x++;
 		ddF_x += 2;
 		f += ddF_x;
-		setPixel(s, x0 + x, y0 + y, color);
-		setPixel(s, x0 - x, y0 + y, color);
-		setPixel(s, x0 + x, y0 - y, color);
-		setPixel(s, x0 - x, y0 - y, color);
-		setPixel(s, x0 + y, y0 + x, color);
-		setPixel(s, x0 - y, y0 + x, color);
-		setPixel(s, x0 + y, y0 - x, color);
-		setPixel(s, x0 - y, y0 - x, color);
+		if (segments & 0x01)
+			setPixel(s, x0 + x, y0 - y, color);
+		if (segments & 0x02)
+			setPixel(s, x0 + y, y0 - x, color);
+		if (segments & 0x04)
+			setPixel(s, x0 + y, y0 + x, color);
+		if (segments & 0x08)
+			setPixel(s, x0 + x, y0 + y, color);
+		if (segments & 0x10)
+			setPixel(s, x0 - x, y0 + y, color);
+		if (segments & 0x20)
+			setPixel(s, x0 - y, y0 + x, color);
+		if (segments & 0x40)
+			setPixel(s, x0 - y, y0 - x, color);
+		if (segments & 0x80)
+			setPixel(s, x0 - x, y0 - y, color);
 	}
 }
 
+void Draw_Circle(
+		SDL_Surface * s,
+		uint16_t x0,
+		uint16_t y0,
+		uint16_t r,
+		uint32_t color
+		)
+{
+	Draw_Circle_Segments(s, x0, y0, r, color, 0xff);
+}
 
 void clearScreen(SDL_Surface * s)
 {
@@ -242,6 +265,7 @@ void mainloop_gfx(marfbed_t * b)
 		for(i=0; i<MARF_MAX; i++)
 		{
 			if (!b->marf[i].enabled) continue;
+
 			Draw_Circle(s,
 					b->marf[i].x * GFX_X / SPACE_X,
 					b->marf[i].y * GFX_Y / SPACE_Y,
@@ -255,11 +279,14 @@ void mainloop_gfx(marfbed_t * b)
 		for(i=0; i<MARF_MAX; i++)
 		{
 			if (!b->marf[i].enabled) continue;
-			Draw_Circle(s,
+
+			uint8_t seg = 0xff >> ((b->marf[i].proto.hello_count * 8) / b->marf[i].proto.hello_count_last_reload);
+			Draw_Circle_Segments(s,
 					b->marf[i].x * GFX_X / SPACE_X,
 					b->marf[i].y * GFX_Y / SPACE_Y,
 					RADIO_R,
-					COLOR_RADIO
+					COLOR_RADIO,
+					seg
 				   );
 		}
 	}
@@ -269,10 +296,12 @@ void mainloop_gfx(marfbed_t * b)
 		{
 			uint32_t col;
 			if (!b->marf[i].enabled) continue;
+
 			if (b->marf[i].moving)
 				col = COLOR_MOVING;
 			else
 				col = b->marf[i].color;
+
 			Draw_Circle(s,
 					b->marf[i].x * GFX_X / SPACE_X,
 					b->marf[i].y * GFX_Y / SPACE_Y,
@@ -292,6 +321,7 @@ void mainloop_gfx(marfbed_t * b)
 		{
 			char buf[16];
 			if (!b->marf[i].enabled) continue;
+
 			SDL_Surface * surf_text;
 			snprintf(buf, 16, "n%d", i);
 #if 0

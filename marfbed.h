@@ -14,6 +14,7 @@ typedef struct protocol_s
 {
 	uint32_t state;
 	uint32_t hello_count;
+	uint32_t hello_count_last_reload;
 
 	uint8_t  sMAC[MAC_LEN];
 	uint8_t  dMAC[MAC_LEN];

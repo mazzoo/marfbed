@@ -54,6 +54,7 @@ void init_marf(marf_t * m)
 	m->enabled = 1;
 
 	m->proto.hello_count = random() % PROTO_HELLO_RATE;
+	m->proto.hello_count_last_reload = m->proto.hello_count;
 }
 
 
@@ -87,6 +88,7 @@ void turnon(marf_t * m)
 	m->y = m->start_y;
 
 	m->proto.hello_count = PROTO_HELLO_RATE;
+	m->proto.hello_count_last_reload = m->proto.hello_count;
 }
 
 
@@ -229,6 +231,7 @@ void protocol(marf_t * m)
 		/* reset periodic hello counter */
 		p->hello_count = PROTO_HELLO_RATE +
 			random() % PROTO_HELLO_JITTER;
+		p->hello_count_last_reload = p->hello_count;
 		m->color = 0x0000ff00;
 
 		/* prepare packet for TX */

@@ -60,7 +60,7 @@
 #define COLOR_RADIO     0x0000ff69
 
 /* ring 3 */
-#define COLOR_RADIO_JAM     0x00ffad00
+#define COLOR_RADIO_JAM     0x00603000
 #define COLOR_RADIO_JAM_NOW 0x00ffadff
 
 #endif /* CONFIG_H */
