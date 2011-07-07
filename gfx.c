@@ -280,7 +280,7 @@ void mainloop_gfx(marfbed_t * b)
 		{
 			if (!b->marf[i].enabled) continue;
 
-			uint8_t seg = 0xff >> ((b->marf[i].proto.hello_count * 8) / b->marf[i].proto.hello_count_last_reload);
+			uint8_t seg = 0xff >> ((b->marf[i].proto.hello_count * 9) / b->marf[i].proto.hello_count_last_reload);
 			Draw_Circle_Segments(s,
 					b->marf[i].x * GFX_X / SPACE_X,
 					b->marf[i].y * GFX_Y / SPACE_Y,
@@ -346,6 +346,7 @@ void mainloop_gfx(marfbed_t * b)
 				printf("ERROR: couldn't bit surface: %s\n", SDL_GetError());
 				exit(1);
 			}
+			SDL_FreeSurface(surf_text);
 		}
 	}
 
