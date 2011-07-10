@@ -53,8 +53,10 @@ void init_marf(marf_t * m)
 
 	m->enabled = 1;
 
-	m->proto.hello_count = random() % PROTO_HELLO_RATE;
-	m->proto.hello_count_last_reload = m->proto.hello_count;
+	m->proto.hello_count_last_reload = 
+		PROTO_HELLO_RATE +
+		random() % PROTO_HELLO_JITTER;
+	m->proto.hello_count = random() % m->proto.hello_count_last_reload;
 }
 
 
@@ -87,8 +89,10 @@ void turnon(marf_t * m)
 	m->x = m->start_x;
 	m->y = m->start_y;
 
-	m->proto.hello_count = PROTO_HELLO_RATE;
-	m->proto.hello_count_last_reload = m->proto.hello_count;
+	m->proto.hello_count_last_reload = 
+		PROTO_HELLO_RATE +
+		random() % PROTO_HELLO_JITTER;
+	m->proto.hello_count = random() % m->proto.hello_count_last_reload;
 }
 
 

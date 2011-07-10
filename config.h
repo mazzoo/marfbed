@@ -18,7 +18,7 @@
 #define MAX_PACKET_LEN        32
 
 #define PROTO_HELLO_RATE     100
-#define PROTO_HELLO_JITTER     8 /* otherwise direct neighbours may see never */
+#define PROTO_HELLO_JITTER    80 /* otherwise direct neighbours may see never */
 
 #define PACKET_TYPE_HELLO   0x01
 
@@ -57,7 +57,7 @@
 #define COLOR_DUPLICATE 0x00ff4444 /* FIXME only used @startup */
 
 /* ring 2 */
-#define COLOR_RADIO     0x0000ff69
+#define COLOR_RADIO     0x00006f49
 
 /* ring 3 */
 #define COLOR_RADIO_JAM     0x00603000
