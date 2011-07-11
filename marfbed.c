@@ -20,7 +20,7 @@ int main(int argc, char ** argv)
 	{
 		mainloop_gfx(&bed);
 		mainloop_marf(&bed);
-		usleep(0x1000);
+		//usleep(0x1000);
 	}
 	return 0;
 }

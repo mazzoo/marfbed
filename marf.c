@@ -53,10 +53,14 @@ void init_marf(marf_t * m)
 
 	m->enabled = 1;
 
+	m->tick = 0;
+
 	m->proto.hello_count_last_reload = 
 		PROTO_HELLO_RATE +
 		random() % PROTO_HELLO_JITTER;
 	m->proto.hello_count = random() % m->proto.hello_count_last_reload;
+
+	m->proto.state = PROTO_STATE_RX;
 }
 
 
@@ -82,6 +86,8 @@ void turnon(marf_t * m)
 
 	m->enabled = 1;
 
+	m->tick = 0;
+
 	set_rnd_start(m);
 	set_rnd_dest(m);
 	set_rnd_speed(m);
@@ -93,6 +99,8 @@ void turnon(marf_t * m)
 		PROTO_HELLO_RATE +
 		random() % PROTO_HELLO_JITTER;
 	m->proto.hello_count = random() % m->proto.hello_count_last_reload;
+
+	m->proto.state = PROTO_STATE_RX;
 }
 
 
@@ -283,8 +291,43 @@ void interfere(marf_t * a, marf_t * b)
 }
 
 
-void receive(marf_t * m)
+void receive(marf_t * tx, marf_t * rx)
 {
+
+	protocol_t * ptx = &tx->proto;
+	protocol_t * prx = &rx->proto;
+
+	if (
+		(ptx->state == PROTO_STATE_TX) &&
+		(prx->state == PROTO_STATE_RX) 
+	   )
+	{
+		if (
+			(tx->x - rx->x) * (tx->x - rx->x) +
+			(tx->y - rx->y) * (tx->y - rx->y) <
+			RADIO_R_SQ
+		   )
+		{
+			switch (ptx->packet[1])
+			{
+				case PACKET_TYPE_HELLO:
+					//printf("n%d got a HELLO from n%d\n",
+					//	tx->index, rx->index);
+					break;
+				default:
+					printf("n%d got an INVALID packet from n%d\n",
+						tx->index, rx->index);
+					printf("\t%2.2x %2.2x\n",
+							prx->packet[0],
+							prx->packet[1]);
+					printf("\tMAC ");
+					int i;
+					for (i=0; i<MAC_LEN; i++)
+						printf("%2.2x ", rx->mac[i]);
+					printf("\n");
+			}
+		}
+	}
 }
 
 
@@ -293,6 +336,8 @@ void mainloop_marf(marfbed_t * b)
 	int i, j;
 	for (i=0; i<MARF_MAX; i++)
 	{
+		b->marf[i].tick++;
+
 		turnon(&b->marf[i]);
 		turnoff(&b->marf[i]);
 		standup(&b->marf[i]);
@@ -306,6 +351,7 @@ void mainloop_marf(marfbed_t * b)
 		for (j=i+1; j<MARF_MAX; j++)
 			interfere(&b->marf[i], &b->marf[j]);
 	for (i=0; i<MARF_MAX; i++)
-		receive(&b->marf[i]);
+		for (j=i+1; j<MARF_MAX; j++)
+			receive(&b->marf[i], &b->marf[j]);
 }
 

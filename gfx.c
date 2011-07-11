@@ -201,7 +201,7 @@ void mainloop_gfx(marfbed_t * b)
 	do
 	{
 		if (pause)
-			usleep(10000);
+			usleep(100000);
 		e.type = SDL_NOEVENT;
 		SDL_PollEvent( &e );
 		if (

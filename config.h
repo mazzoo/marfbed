@@ -27,18 +27,20 @@
 #define PROTO_STATE_TX    0x0003
 #define PROTO_STATE_RD    0x0004 /* transmitter turnoff for RX */
 
+#define N_NEIGHBOURS          20
+
 /* node movement */
 
 #define SPEED_MAX             64
 
-#define RATE_STANDUP           5 /* per mille */
+#define RATE_STANDUP           1 /* per mille */
 #define RATE_SITDOWN    RATE_STANDUP
 
 #define RATE_TURNOFF          16 /* per mille */
 #define RATE_TURNON     RATE_TURNOFF
 
 
-#define RADIO_R               10
+#define RADIO_R               20
 #define RADIO_R_JAM           30
 
 #define RADIO_R_SQ      (RADIO_R     * RADIO_R    )

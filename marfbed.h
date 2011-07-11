@@ -10,6 +10,14 @@
 #define STATE_RX_EN 0x00000001
 #define STATE_TX_EN 0x00000002
 
+typedef struct neighbour_s
+{
+	uint32_t first_seen;
+	uint32_t last_seen;
+	uint8_t  MAC[MAC_LEN];
+} neighbour_t;
+
+
 typedef struct protocol_s
 {
 	uint32_t state;
@@ -22,9 +30,12 @@ typedef struct protocol_s
 	uint8_t  packet[MAX_PACKET_LEN];
 } protocol_t;
 
+
 typedef struct marf_s
 {
 	uint32_t index;
+
+	uint32_t tick;
 
 	uint16_t x; /* current position */
 	uint16_t y;
@@ -45,6 +56,8 @@ typedef struct marf_s
 	uint8_t  enabled;
 
 	protocol_t proto;
+
+	neighbour_t neighbour[N_NEIGHBOURS];
 } marf_t;
 
 typedef struct marfbed_s
