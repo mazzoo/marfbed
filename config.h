@@ -9,11 +9,11 @@
 #define SPACE_Y 600
 #endif
 
-#define MARF_MAX              80
+#define MARF_MAX            1080
 
 /* protocol */
 
-#define MAC_LEN                1 /* in bytes */
+#define MAC_LEN                3 /* in bytes */
 
 #define MAX_PACKET_LEN        32
 

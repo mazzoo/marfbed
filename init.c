@@ -34,8 +34,8 @@ void init(marfbed_t * b)
 	int i;
 	for (i=0; i<MARF_MAX; i++)
 	{
-		init_marf(&(b->marf[i]));
 		b->marf[i].index = i;
+		init_marf(&(b->marf[i]));
 		//print_mac(&b->marf[i]);
 	}
 }

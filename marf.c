@@ -39,31 +39,6 @@ void set_rnd_MAC(marf_t * m)
 }
 
 
-void init_marf(marf_t * m)
-{
-	set_rnd_start(m);
-	set_rnd_dest(m);
-	set_rnd_speed(m);
-	set_rnd_MAC(m);
-
-	m->x = m->start_x;
-	m->y = m->start_y;
-
-	m->moving = 1;
-
-	m->enabled = 1;
-
-	m->tick = 0;
-
-	m->proto.hello_count_last_reload = 
-		PROTO_HELLO_RATE +
-		random() % PROTO_HELLO_JITTER;
-	m->proto.hello_count = random() % m->proto.hello_count_last_reload;
-
-	m->proto.state = PROTO_STATE_RX;
-}
-
-
 void print_mac(marf_t * m)
 {
 	int i;
@@ -77,6 +52,44 @@ void print_mac(marf_t * m)
 }
 
 
+void init_marf(marf_t * m)
+{
+	set_rnd_start(m);
+	set_rnd_dest(m);
+	set_rnd_speed(m);
+	set_rnd_MAC(m);
+
+#if 0
+	printf("n%d's MAC is ", m->index);
+	print_mac(m);
+#endif
+
+	m->x = m->start_x;
+	m->y = m->start_y;
+
+	m->moving = 1;
+
+	m->enabled = 1;
+
+	m->tick = 1;
+
+	m->proto.hello_count_last_reload = 
+		PROTO_HELLO_RATE +
+		random() % PROTO_HELLO_JITTER;
+	m->proto.hello_count = random() % m->proto.hello_count_last_reload;
+
+	m->proto.state = PROTO_STATE_RX;
+
+	int i;
+	for (i=0; i < N_NEIGHBOURS; i++)
+	{
+		m->neighbour[i].first_seen = 0;
+		m->neighbour[i].last_seen = 0;
+	}
+}
+
+
+
 void turnon(marf_t * m)
 {
 	if (m->enabled) return;
@@ -86,7 +99,7 @@ void turnon(marf_t * m)
 
 	m->enabled = 1;
 
-	m->tick = 0;
+	m->tick = 1;
 
 	set_rnd_start(m);
 	set_rnd_dest(m);
@@ -270,6 +283,9 @@ void transmit(marf_t * m)
 void interfere(marf_t * a, marf_t * b)
 {
 
+	if (!a->enabled) return;
+	if (!b->enabled) return;
+
 	protocol_t * pa = &a->proto;
 	protocol_t * pb = &b->proto;
 
@@ -285,14 +301,52 @@ void interfere(marf_t * a, marf_t * b)
 			RADIO_R_JAM_SQ
 		   )
 		{
-			printf("%d and %d interfere\n", a->index, b->index);
+			printf("n%d and n%d interfere\n", a->index, b->index);
 		}
 	}
 }
 
 
+/* rx got a HELLO packet from tx */
+void neighbour(marf_t * tx, marf_t * rx)
+{
+	int h;
+	for (h=0; h < N_NEIGHBOURS; h++)
+	{
+		if (rx->neighbour[h].first_seen)
+		{
+			if (!memcmp(tx->mac, rx->neighbour[h].mac, MAC_LEN))
+			{
+				rx->neighbour[h].last_seen = rx->tick;
+				//printf("n%d saw n%d at %d\n",
+				//		rx->index, tx->index, h);
+				return;
+			}
+		}
+	}
+	/* find a free slot for a new neighbour */
+	for (h=0; h < N_NEIGHBOURS; h++)
+	{
+		if (!rx->neighbour[h].first_seen)
+		{
+			rx->neighbour[h].first_seen = rx->tick;
+			rx->neighbour[h].last_seen = rx->tick;
+			memcpy(rx->neighbour[h].mac, tx->mac, MAC_LEN);
+			printf("n%d got to know n%d at index %d, tick %d\n",
+				rx->index, tx->index, h, rx->tick);
+			return;
+		}
+	}
+	printf("WARNING: n%d couldn't store new neighbour n%d\n",
+		rx->index, tx->index);
+}
+
+
 void receive(marf_t * tx, marf_t * rx)
 {
+
+	if (!tx->enabled) return;
+	if (!rx->enabled) return;
 
 	protocol_t * ptx = &tx->proto;
 	protocol_t * prx = &rx->proto;
@@ -312,7 +366,8 @@ void receive(marf_t * tx, marf_t * rx)
 			{
 				case PACKET_TYPE_HELLO:
 					//printf("n%d got a HELLO from n%d\n",
-					//	tx->index, rx->index);
+					//	rx->index, tx->index);
+					neighbour(tx, rx);
 					break;
 				default:
 					printf("n%d got an INVALID packet from n%d\n",
@@ -330,7 +385,6 @@ void receive(marf_t * tx, marf_t * rx)
 	}
 }
 
-
 void mainloop_marf(marfbed_t * b)
 {
 	int i, j;
@@ -347,10 +401,10 @@ void mainloop_marf(marfbed_t * b)
 	}
 	for (i=0; i<MARF_MAX; i++)
 		transmit(&b->marf[i]);
-	for (i=0; i<MARF_MAX; i++)
+	for (i=0; i<MARF_MAX-1; i++)
 		for (j=i+1; j<MARF_MAX; j++)
 			interfere(&b->marf[i], &b->marf[j]);
-	for (i=0; i<MARF_MAX; i++)
+	for (i=0; i<MARF_MAX-1; i++)
 		for (j=i+1; j<MARF_MAX; j++)
 			receive(&b->marf[i], &b->marf[j]);
 }

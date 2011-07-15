@@ -14,7 +14,7 @@ typedef struct neighbour_s
 {
 	uint32_t first_seen;
 	uint32_t last_seen;
-	uint8_t  MAC[MAC_LEN];
+	uint8_t  mac[MAC_LEN];
 } neighbour_t;
 
 
