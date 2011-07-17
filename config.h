@@ -9,7 +9,7 @@
 #define SPACE_Y 600
 #endif
 
-#define MARF_MAX            1080
+#define MARF_MAX              80
 
 /* protocol */
 

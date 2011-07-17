@@ -1,0 +1,38 @@
+marfbed
+~~~~~~~
+
+testbed for wireless (ad hoc) (routing) protocols.
+with visualisation.
+
+
+compile
+~~~~~~~
+
+make clean && make
+
+
+control
+~~~~~~~
+
+adjust most parameters in config.h
+
+
+runtime
+~~~~~~~
+
+use the keys:
+  '1' - display the node circle
+  '2' - display the trx radio range circle
+  '3' - display the radio interference circle
+  'l' - display lines of moving nodes
+  'n' - display name labels of nodes
+  'p' or <space> - pause
+  'q' or <ESC>   - quit
+
+
+legal
+~~~~~
+
+(c) by Matthias Wenzel 2011
+    licensed under GPL v2
+
