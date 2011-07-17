@@ -301,7 +301,11 @@ void interfere(marf_t * a, marf_t * b)
 			RADIO_R_JAM_SQ
 		   )
 		{
+#if (VERBOSE == 1)
 			printf("n%d and n%d interfere\n", a->index, b->index);
+#endif
+			pa->state = PROTO_STATE_JAM;
+			pb->state = PROTO_STATE_JAM;
 		}
 	}
 }
@@ -318,8 +322,10 @@ void neighbour(marf_t * tx, marf_t * rx)
 			if (!memcmp(tx->mac, rx->neighbour[h].mac, MAC_LEN))
 			{
 				rx->neighbour[h].last_seen = rx->tick;
-				//printf("n%d saw n%d at %d\n",
-				//		rx->index, tx->index, h);
+#if (VERBOSE == 1)
+				printf("n%d saw n%d at %d\n",
+						rx->index, tx->index, h);
+#endif
 				return;
 			}
 		}
@@ -332,13 +338,41 @@ void neighbour(marf_t * tx, marf_t * rx)
 			rx->neighbour[h].first_seen = rx->tick;
 			rx->neighbour[h].last_seen = rx->tick;
 			memcpy(rx->neighbour[h].mac, tx->mac, MAC_LEN);
+#if (VERBOSE == 1)
 			printf("n%d got to know n%d at index %d, tick %d\n",
 				rx->index, tx->index, h, rx->tick);
+#endif
 			return;
 		}
 	}
-	printf("WARNING: n%d couldn't store new neighbour n%d\n",
-		rx->index, tx->index);
+	/* we replace the neighbour we haven't seen for the longest time */
+	uint32_t oldest = rx->tick;
+	int      oldest_index = -1;
+	for (h=0; h < N_NEIGHBOURS; h++)
+	{
+		if (rx->neighbour[h].last_seen < oldest)
+		{
+			oldest = rx->neighbour[h].last_seen;
+			oldest_index = h;
+		}
+	}
+
+	/* but we replace only if we missed at least the latest HELLO */
+	if (rx->tick - oldest <  PROTO_HELLO_RATE + PROTO_HELLO_JITTER)
+	{
+		printf("WARNING: n%d couldn't store new neighbour n%d (oldest = %d, tick = %d)\n",
+			rx->index, tx->index, oldest, rx->tick);
+	}else{
+#if (VERBOSE == 1)
+		printf("n%d replaces a neighbour seen before %d ticks with n%d\n",
+			rx->index,
+			rx->tick - rx->neighbour[oldest_index].last_seen,
+			tx->index);
+#endif
+		rx->neighbour[oldest_index].first_seen = rx->tick;
+		rx->neighbour[oldest_index].last_seen = rx->tick;
+		memcpy(rx->neighbour[oldest_index].mac, tx->mac, MAC_LEN);
+	}
 }
 
 

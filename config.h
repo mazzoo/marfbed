@@ -26,8 +26,9 @@
 #define PROTO_STATE_RU    0x0002 /* transmitter ramp up for TX */
 #define PROTO_STATE_TX    0x0003
 #define PROTO_STATE_RD    0x0004 /* transmitter turnoff for RX */
+#define PROTO_STATE_JAM   0x0005 /* RF interference with other TX, packet lost */
 
-#define N_NEIGHBOURS          20
+#define N_NEIGHBOURS           8
 
 /* node movement */
 
